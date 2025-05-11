@@ -28,7 +28,7 @@ This document explains the implementation of a rate limiter using the Token Buck
 - **Lightweight** – store only three values per client (tokens, lastRefill, rate)
 - **Proven** – used by AWS, Stripe, etc.
 
-## Other options (and their deal‑breakers)
+## Considered options
 
 ### 1. Fixed Window Counter
 
