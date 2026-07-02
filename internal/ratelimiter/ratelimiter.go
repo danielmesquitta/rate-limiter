@@ -15,7 +15,7 @@ type clientData struct {
 // RateLimiter manages rate limiting for multiple clients using the Token Bucket algorithm.
 type RateLimiter struct {
 	clients    map[string]*clientData // Map to store each client's bucket data.
-	rate       float64                // Tokens added per second (N).
+	refilRate  float64                // Tokens added per second (N).
 	bucketSize float64                // Maximum tokens in a bucket (N).
 	mu         sync.Mutex             // Mutex to protect the 'clients' map.
 }
@@ -28,7 +28,7 @@ func NewRateLimiter(n int) *RateLimiter {
 	}
 	return &RateLimiter{
 		clients:    make(map[string]*clientData),
-		rate:       float64(n),
+		refilRate:  float64(n),
 		bucketSize: float64(n),
 	}
 }
@@ -53,7 +53,7 @@ func (rl *RateLimiter) RateLimit(clientName string) bool {
 	// Refill tokens based on elapsed time.
 	now := time.Now()
 	elapsed := now.Sub(client.lastRefillTime).Seconds()
-	tokensToAdd := elapsed * rl.rate
+	tokensToAdd := elapsed * rl.refilRate
 	client.tokens += tokensToAdd
 	client.lastRefillTime = now
 
