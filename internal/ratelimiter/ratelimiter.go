@@ -35,15 +35,15 @@ func NewRateLimiter(n int) *RateLimiter {
 
 // RateLimit checks if a request from a given client should be allowed or denied.
 // It returns true if the request is allowed, false otherwise.
-func (rl *RateLimiter) RateLimit(clientName string) bool {
+func (rl *RateLimiter) RateLimit(clientKey string) bool {
 	rl.mu.Lock()
-	client, exists := rl.clients[clientName]
+	client, exists := rl.clients[clientKey]
 	if !exists {
 		client = &clientData{
 			tokens:         rl.bucketSize, // New client starts with a full bucket.
 			lastRefillTime: time.Now(),
 		}
-		rl.clients[clientName] = client
+		rl.clients[clientKey] = client
 	}
 	rl.mu.Unlock()
 

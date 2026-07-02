@@ -10,23 +10,23 @@ func TestRateLimiter_BasicLimit(t *testing.T) {
 	t.Parallel()
 	n := 3
 	limiter := NewRateLimiter(n)
-	clientName := "testClient1"
+	clientKey := "testClient1"
 
 	for i := 0; i < n; i++ {
-		if !limiter.RateLimit(clientName) {
+		if !limiter.RateLimit(clientKey) {
 			t.Errorf(
 				"Request %d for %s should have been allowed, but was denied",
 				i+1,
-				clientName,
+				clientKey,
 			)
 		}
 	}
 
-	if limiter.RateLimit(clientName) {
+	if limiter.RateLimit(clientKey) {
 		t.Errorf(
 			"Request %d for %s should have been denied, but was allowed",
 			n+1,
-			clientName,
+			clientKey,
 		)
 	}
 }
@@ -35,18 +35,18 @@ func TestRateLimiter_TokenRefill(t *testing.T) {
 	t.Parallel()
 	n := 1
 	limiter := NewRateLimiter(n)
-	clientName := "testClient2"
+	clientKey := "testClient2"
 
 	// Use up the token
-	if !limiter.RateLimit(clientName) {
-		t.Fatalf("%s: First request should be allowed", clientName)
+	if !limiter.RateLimit(clientKey) {
+		t.Fatalf("%s: First request should be allowed", clientKey)
 	}
 
 	// This one should be denied
-	if limiter.RateLimit(clientName) {
+	if limiter.RateLimit(clientKey) {
 		t.Fatalf(
 			"%s: Second request immediately after should be denied",
-			clientName,
+			clientKey,
 		)
 	}
 
@@ -55,10 +55,10 @@ func TestRateLimiter_TokenRefill(t *testing.T) {
 		1050 * time.Millisecond,
 	) // Sleep a bit more than 1s to ensure refill
 
-	if !limiter.RateLimit(clientName) {
+	if !limiter.RateLimit(clientKey) {
 		t.Fatalf(
 			"%s: Request after 1s wait should be allowed due to token refill",
-			clientName,
+			clientKey,
 		)
 	}
 }
@@ -67,23 +67,23 @@ func TestRateLimiter_BurstAllowance(t *testing.T) {
 	t.Parallel()
 	n := 5 // Bucket size and rate are 5
 	limiter := NewRateLimiter(n)
-	clientName := "testClient3"
+	clientKey := "testClient3"
 
 	// Client is new, should have full bucket
 	for i := 0; i < n; i++ {
-		if !limiter.RateLimit(clientName) {
+		if !limiter.RateLimit(clientKey) {
 			t.Errorf(
 				"Burst request %d for %s should have been allowed, but was denied",
 				i+1,
-				clientName,
+				clientKey,
 			)
 		}
 	}
-	if limiter.RateLimit(clientName) {
+	if limiter.RateLimit(clientKey) {
 		t.Errorf(
 			"Burst request %d for %s (exceeding bucket) should have been denied, but was allowed",
 			n+1,
-			clientName,
+			clientKey,
 		)
 	}
 
@@ -94,20 +94,20 @@ func TestRateLimiter_BurstAllowance(t *testing.T) {
 
 	// Should be able to make 2 more requests
 	for i := 0; i < 2; i++ {
-		if !limiter.RateLimit(clientName) {
+		if !limiter.RateLimit(clientKey) {
 			t.Errorf(
 				"Request %d post-partial-refill for %s should have been allowed",
 				i+1,
-				clientName,
+				clientKey,
 			)
 			return
 		}
 	}
-	if limiter.RateLimit(clientName) {
+	if limiter.RateLimit(clientKey) {
 		t.Errorf(
 			"Request %d post-partial-refill for %s (exceeding refilled tokens) should have been denied",
 			3,
-			clientName,
+			clientKey,
 		)
 	}
 }
@@ -154,7 +154,7 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 	t.Parallel()
 	n := 100 // Allow a higher number for concurrency test
 	limiter := NewRateLimiter(n)
-	clientName := "concurrentClient"
+	clientKey := "concurrentClient"
 	numGoroutines := 200 // More goroutines than allowed requests
 	allowedCount := 0
 	var mu sync.Mutex // Mutex for shared allowedCount
@@ -165,7 +165,7 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if limiter.RateLimit(clientName) {
+			if limiter.RateLimit(clientKey) {
 				mu.Lock()
 				allowedCount++
 				mu.Unlock()
